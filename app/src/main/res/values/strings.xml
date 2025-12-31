@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Umbrella Reminder</string>
+    <string name="permission_location_title">Location Permission Required</string>
+    <string name="permission_location_message">This app needs location permission to check the weather forecast for your area.</string>
+    <string name="permission_notification_title">Notification Permission Required</string>
+    <string name="permission_notification_message">This app needs notification permission to send you daily umbrella reminders.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="deny_permission">Deny</string>
+    <string name="settings">Settings</string>
+    <string name="enable_notifications">Enable Notifications</string>
+    <string name="notification_title">Umbrella Reminder</string>
+    <string name="notification_take_umbrella">Take your umbrella today! Rain expected between 8AM-6PM.</string>
+    <string name="notification_no_umbrella">No umbrella needed today. No rain expected.</string>
+    <string name="notification_channel_name">Daily Weather Reminders</string>
+    <string name="notification_channel_description">Daily notifications about whether you need an umbrella</string>
+    <string name="location_error">Unable to get your location. Please check GPS settings.</string>
+    <string name="weather_error">Unable to fetch weather data. Please check your internet connection.</string>
+    <string name="checking_weather">Checking weather forecast...</string>
+    <string name="notification_enabled">Daily notifications enabled at 7:30 AM Paris time</string>
+    <string name="notification_disabled">Daily notifications disabled</string>
+</resources>
