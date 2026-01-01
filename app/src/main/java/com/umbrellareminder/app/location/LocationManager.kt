@@ -1,4 +1,4 @@
-package com.umbrella.reminder.location
+package com.umbrellareminder.app.location
 
 import android.Manifest
 import android.content.Context

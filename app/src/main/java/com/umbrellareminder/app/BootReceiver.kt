@@ -1,9 +1,9 @@
-package com.umbrella.reminder
+package com.umbrellareminder.app
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.umbrella.reminder.scheduler.NotificationScheduler
+import com.umbrellareminder.app.scheduler.NotificationScheduler
 
 class BootReceiver : BroadcastReceiver() {
     

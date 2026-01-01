@@ -1,4 +1,4 @@
-package com.umbrella.reminder
+package com.umbrellareminder.app
 
 import android.Manifest
 import android.content.Intent
@@ -11,10 +11,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.umbrella.reminder.databinding.ActivityMainBinding
-import com.umbrella.reminder.location.LocationManager
-import com.umbrella.reminder.notification.NotificationHelper
-import com.umbrella.reminder.scheduler.NotificationScheduler
+import com.umbrellareminder.app.databinding.ActivityMainBinding
+import com.umbrellareminder.app.location.LocationManager
+import com.umbrellareminder.app.notification.NotificationHelper
+import com.umbrellareminder.app.scheduler.NotificationScheduler
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import androidx.lifecycle.lifecycleScope
@@ -120,12 +120,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun enableNotifications() {
         if (hasAllPermissions()) {
+            // Get location name for the status message
+            lifecycleScope.launch {
+                try {
+                    val locationResult = locationManager.getLastKnownLocation()
+                    if (locationResult.isSuccess) {
+                        val location = locationResult.getOrThrow()
+                        val weatherRepository = com.umbrellareminder.app.data.WeatherRepository()
+                        val locationNameResult = weatherRepository.getLocationName(location.latitude, location.longitude)
+                        val locationName = locationNameResult.getOrNull() ?: "your area"
+                        
+                        val message = "Daily notifications enabled at 7:30 AM in $locationName"
+                        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
+                    } else {
+                        Snackbar.make(binding.root, R.string.notification_enabled, Snackbar.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Snackbar.make(binding.root, R.string.notification_enabled, Snackbar.LENGTH_SHORT).show()
+                }
+            }
+            
             notificationScheduler.scheduleDailyNotification()
-            Snackbar.make(
-                binding.root,
-                R.string.notification_enabled,
-                Snackbar.LENGTH_SHORT
-            ).show()
         } else {
             binding.toggleButton.isChecked = false
             checkAndRequestPermissions()
@@ -152,32 +167,59 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
+                android.util.Log.d("MainActivity", "Starting weather check...")
+                
                 val locationResult = locationManager.getLastKnownLocation()
                 if (locationResult.isFailure) {
+                    android.util.Log.e("MainActivity", "Location failed: ${locationResult.exceptionOrNull()?.message}")
                     binding.statusText.text = "Unable to get location"
                     return@launch
                 }
 
                 val location = locationResult.getOrThrow()
+                android.util.Log.d("MainActivity", "Location obtained: ${location.latitude}, ${location.longitude}")
                 
                 // Use the same logic as WeatherCheckWorker
-                val weatherRepository = com.umbrella.reminder.data.WeatherRepository()
+                val weatherRepository = com.umbrellareminder.app.data.WeatherRepository()
                 val weatherResult = weatherRepository.getWeatherForecast(location.latitude, location.longitude)
                 
                 if (weatherResult.isFailure) {
+                    android.util.Log.e("MainActivity", "Weather API failed: ${weatherResult.exceptionOrNull()?.message}")
                     binding.statusText.text = "Unable to fetch weather data"
                     return@launch
                 }
 
                 val weatherResponse = weatherResult.getOrThrow()
-                val shouldTakeUmbrella = weatherRepository.shouldTakeUmbrella(weatherResponse)
+                android.util.Log.d("MainActivity", "Weather response received")
                 
-                // Send notification
-                notificationHelper.showUmbrellaNotification(shouldTakeUmbrella)
+                // Get location name
+                val locationNameResult = weatherRepository.getLocationName(
+                    location.latitude,
+                    location.longitude
+                )
+                val locationName = locationNameResult.getOrNull()
+                android.util.Log.d("MainActivity", "Location name: $locationName")
+                
+                // Get current temperature
+                val currentTemperature = weatherResponse.currentWeather?.temperature 
+                    ?: weatherResponse.hourly.temperatures.firstOrNull()
+                android.util.Log.d("MainActivity", "Current temperature: $currentTemperature")
+                
+                val shouldTakeUmbrella = weatherRepository.shouldTakeUmbrella(weatherResponse)
+                android.util.Log.d("MainActivity", "Should take umbrella: $shouldTakeUmbrella")
+                
+                // Send notification with location and temperature
+                notificationHelper.showUmbrellaNotification(
+                    shouldTakeUmbrella,
+                    locationName,
+                    currentTemperature
+                )
                 
                 binding.statusText.text = "Weather check complete! Check your notifications."
+                android.util.Log.d("MainActivity", "Weather check completed successfully")
                 
             } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "Error in weather check: ${e.message}", e)
                 binding.statusText.text = "Error: ${e.message}"
             } finally {
                 binding.checkNowButton.isEnabled = true
@@ -200,9 +242,30 @@ class MainActivity : AppCompatActivity() {
         if (!hasPermissions) {
             binding.statusText.text = "Permissions required"
         } else if (isScheduled) {
-            binding.statusText.text = "Daily notifications enabled"
+            // Try to get location name for the status
+            lifecycleScope.launch {
+                try {
+                    val locationResult = locationManager.getLastKnownLocation()
+                    if (locationResult.isSuccess) {
+                        val location = locationResult.getOrThrow()
+                        val weatherRepository = com.umbrellareminder.app.data.WeatherRepository()
+                        val locationNameResult = weatherRepository.getLocationName(location.latitude, location.longitude)
+                        val locationName = locationNameResult.getOrNull()
+                        
+                        if (locationName != null) {
+                            binding.statusText.text = "Daily notifications enabled in $locationName"
+                        } else {
+                            binding.statusText.text = getString(R.string.notification_enabled)
+                        }
+                    } else {
+                        binding.statusText.text = getString(R.string.notification_enabled)
+                    }
+                } catch (e: Exception) {
+                    binding.statusText.text = getString(R.string.notification_enabled)
+                }
+            }
         } else {
-            binding.statusText.text = "Notifications disabled"
+            binding.statusText.text = getString(R.string.notification_disabled)
         }
     }
 

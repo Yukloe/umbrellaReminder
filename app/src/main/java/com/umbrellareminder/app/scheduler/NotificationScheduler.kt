@@ -1,8 +1,8 @@
-package com.umbrella.reminder.scheduler
+package com.umbrellareminder.app.scheduler
 
 import android.content.Context
 import androidx.work.*
-import com.umbrella.reminder.work.WeatherCheckWorker
+import com.umbrellareminder.app.work.WeatherCheckWorker
 import java.time.*
 import java.util.concurrent.TimeUnit
 
@@ -22,8 +22,11 @@ class NotificationScheduler(private val context: Context) {
          .setConstraints(
             Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(false)
+                .setRequiresCharging(false)
                 .build()
         )
+         .addTag("weather_check")
          .build()
 
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -50,10 +53,10 @@ class NotificationScheduler(private val context: Context) {
             scheduledDateTime = scheduledDateTime.plusDays(1)
         }
         
-        // Convert to Paris timezone
-        val parisZone = ZoneId.of("Europe/Paris")
-        val currentZonedDateTime = ZonedDateTime.now(parisZone)
-        val scheduledZonedDateTime = scheduledDateTime.atZone(parisZone)
+        // Use device's local timezone instead of Paris timezone
+        val localZone = ZoneId.systemDefault()
+        val currentZonedDateTime = ZonedDateTime.now(localZone)
+        val scheduledZonedDateTime = scheduledDateTime.atZone(localZone)
         
         return Duration.between(currentZonedDateTime, scheduledZonedDateTime).toMillis()
     }

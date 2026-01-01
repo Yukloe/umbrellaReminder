@@ -16,6 +16,6 @@
     <string name="location_error">Unable to get your location. Please check GPS settings.</string>
     <string name="weather_error">Unable to fetch weather data. Please check your internet connection.</string>
     <string name="checking_weather">Checking weather forecast...</string>
-    <string name="notification_enabled">Daily notifications enabled at 7:30 AM Paris time</string>
+    <string name="notification_enabled">Daily notifications enabled at 7:30 AM local time</string>
     <string name="notification_disabled">Daily notifications disabled</string>
 </resources>

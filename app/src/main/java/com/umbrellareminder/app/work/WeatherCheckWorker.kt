@@ -1,11 +1,11 @@
-package com.umbrella.reminder.work
+package com.umbrellareminder.app.work
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.umbrella.reminder.data.WeatherRepository
-import com.umbrella.reminder.location.LocationManager
-import com.umbrella.reminder.notification.NotificationHelper
+import com.umbrellareminder.app.data.WeatherRepository
+import com.umbrellareminder.app.location.LocationManager
+import com.umbrellareminder.app.notification.NotificationHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -40,11 +40,26 @@ class WeatherCheckWorker(
 
             val weatherResponse = weatherResult.getOrThrow()
             
+            // Get location name
+            val locationNameResult = weatherRepository.getLocationName(
+                location.latitude,
+                location.longitude
+            )
+            val locationName = locationNameResult.getOrNull()
+            
+            // Get current temperature
+            val currentTemperature = weatherResponse.currentWeather?.temperature 
+                ?: weatherResponse.hourly.temperatures.firstOrNull()
+            
             // Check if umbrella is needed
             val shouldTakeUmbrella = weatherRepository.shouldTakeUmbrella(weatherResponse)
             
-            // Send notification
-            notificationHelper.showUmbrellaNotification(shouldTakeUmbrella)
+            // Send notification with location and temperature
+            notificationHelper.showUmbrellaNotification(
+                shouldTakeUmbrella,
+                locationName,
+                currentTemperature
+            )
             
             Result.success()
         } catch (e: Exception) {
